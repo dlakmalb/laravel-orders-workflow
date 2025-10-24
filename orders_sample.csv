@@ -1,0 +1,7 @@
+external_order_id,order_placed_at,currency,customer_id,customer_email,customer_name,product_sku,product_name,unit_price_cents,qty
+ORD-100045,2025-10-18T10:12:00+05:30,EUR,CUST-001,jane@example.com,Jane Doe,SKU-IPH14-BLK-128,iPhone 14 128GB Black,109900,1
+ORD-100045,2025-10-18T10:12:00+05:30,EUR,CUST-001,jane@example.com,Jane Doe,SKU-USB-C-20W,USB-C 20W Charger,1999,2
+ORD-100046,2025-10-18T10:35:55+05:30,EUR,CUST-002,john@example.com,John Smith,SKU-PS5-SLIM,PlayStation 5 Slim,49900,1
+ORD-100047,2025-10-18T11:02:10+05:30,EUR,CUST-003,mila@example.com,Mila Chan,SKU-BOOK-ML-101,Hands-on Machine Learning,3999,1
+ORD-100047,2025-10-18T11:02:10+05:30,EUR,CUST-003,mila@example.com,Mila Chan,SKU-MOUSE-LOGI-MX3,Logi MX Master 3S,8999,1
+ORD-100047,2025-10-18T11:02:10+05:30,EUR,CUST-003,mila@example.com,Mila Chan,SKU-HDMI-2M,HDMI 2.1 Cable 2m,1299,2
