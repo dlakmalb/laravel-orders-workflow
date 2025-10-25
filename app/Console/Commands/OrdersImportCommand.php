@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Jobs\ProcessOrderJob;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -133,7 +134,7 @@ class OrdersImportCommand extends Command
         }
         $assoc = array_combine($header, $data);
         $assoc['_line'] = $lineNo;
-dd($assoc);
+
         // Basic presence checks; deeper validation happens later
         foreach (['external_order_id','customer_id','customer_email','customer_name','product_sku','product_name','unit_price_cents','qty','order_placed_at','currency'] as $k) {
             if (! isset($assoc[$k]) || $assoc[$k] === '') {
@@ -185,7 +186,11 @@ dd($assoc);
             $product = Product::query()
                 ->updateOrCreate(
                     ['sku' => $sku],
-                    ['name' => $productName, 'price_cents' => $unitPriceCents]
+                    [
+                        'name' => $productName,
+                        'price_cents' => $unitPriceCents,
+                        'stock_qty' => 10
+                    ]
                 );
 
             // 4) Upsert Order by external_order_id (idempotent)
@@ -195,8 +200,7 @@ dd($assoc);
                     [
                         'customer_id' => $customer->id,
                         'currency' => $currency,
-                        'placed_at' => $placedAt,   // stored as tz in DB
-                        // 'total_cents' stays for later recompute
+                        'placed_at' => $placedAt
                     ]
                 );
 
@@ -223,7 +227,9 @@ dd($assoc);
     private function finalizeOrders(): void
     {
         $orderIds = array_keys($this->ordersToEnqueue);
+
         if (empty($orderIds)) {
+            Log::info('No orders to finalize.');
             return;
         }
 
@@ -241,12 +247,10 @@ dd($assoc);
             foreach ($ids as $orderId) {
                 $total = (int) ($sums[$orderId] ?? 0);
                 Order::whereKey($orderId)->update(['total_cents' => $total]);
-            }
 
-            // 2) Enqueue processing job once per order
-            // foreach ($ids as $orderId) {
-            //     ProcessOrderJob::dispatch($orderId);
-            // }
+                // Enqueue processing job once per order
+                ProcessOrderJob::dispatch($orderId);
+            }
         });
     }
 }
