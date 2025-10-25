@@ -2,14 +2,14 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Redis;
 
 class KpiService
 {
     private function kpiKey(string $metric): string
     {
-        return 'kpi:' . Carbon::now()->format('Y-m-d') . ':' . $metric;
+        return 'kpi:'.Carbon::now()->format('Y-m-d').':'.$metric;
     }
 
     private function leaderboardKey(): string

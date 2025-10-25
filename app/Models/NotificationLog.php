@@ -15,7 +15,7 @@ class NotificationLog extends Model
         'payload',
         'success',
         'error',
-        'sent_at'
+        'sent_at',
     ];
 
     protected $casts = [

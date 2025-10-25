@@ -37,6 +37,7 @@ class FakeGatewayChargeJob implements ShouldQueue
 
         if (! $order || $order->isTerminal()) {
             Log::info("Order {$order->id} is already in terminal state {$order->status}, skipping processing.");
+
             return;
         }
 

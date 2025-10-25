@@ -21,7 +21,9 @@ class Refund extends Model
     ];
 
     public const STATUS_REQUESTED = 'REQUESTED';
+
     public const STATUS_PROCESSED = 'PROCESSED';
+
     public const STATUS_FAILED = 'FAILED';
 
     public function order(): BelongsTo

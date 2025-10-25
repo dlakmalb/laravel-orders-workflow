@@ -31,7 +31,7 @@ class PaymentCallbackJob implements ShouldQueue
         //
     }
 
-     public function middleware(): array
+    public function middleware(): array
     {
         return [new WithoutOverlapping("callback:order:{$this->orderId}")];
     }
@@ -45,6 +45,7 @@ class PaymentCallbackJob implements ShouldQueue
 
         if (! $order || $order->isTerminal()) {
             Log::info("Order {$order->id} is already in terminal state {$order->status}, skipping processing.");
+
             return;
         }
 
@@ -110,11 +111,11 @@ class PaymentCallbackJob implements ShouldQueue
             Payment::updateOrCreate(
                 ['order_id' => $order->id],
                 [
-                    'provider'     => 'fake',
+                    'provider' => 'fake',
                     'provider_ref' => $this->providerRef,
                     'amount_cents' => $order->total_cents,
-                    'status'       => 'FAILED',
-                    'paid_at'      => null,
+                    'status' => 'FAILED',
+                    'paid_at' => null,
                 ]
             );
 

@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('provider', 32)->default('fake');
             $table->string('provider_ref', 64)->nullable();
             $table->unsignedInteger('amount_cents');
-            $table->enum('status', ['SUCCEEDED','FAILED']);
+            $table->enum('status', ['SUCCEEDED', 'FAILED']);
             $table->dateTimeTz('paid_at', 6)->nullable();
 
             $table->timestamps(6);

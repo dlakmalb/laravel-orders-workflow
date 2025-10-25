@@ -31,6 +31,7 @@ class OrdersImportCommand extends Command
     protected $description = 'Import orders CSV and enqueue processing jobs';
 
     private array $ordersResetThisRun = [];
+
     private array $ordersToEnqueue = [];
 
     /**
@@ -48,7 +49,6 @@ class OrdersImportCommand extends Command
 
         $stream = fopen($path, 'rb');
 
-
         $rows = LazyCollection::make(function () use ($stream) {
             $header = null;
             $lineNo = 0;
@@ -62,6 +62,7 @@ class OrdersImportCommand extends Command
                     if (! $header) {
                         break;
                     }
+
                     continue;
                 }
 
@@ -77,6 +78,7 @@ class OrdersImportCommand extends Command
         foreach ($rows as $row) {
             if ($row === null) {
                 $skippedCount++;
+
                 continue;
             }
 
@@ -94,7 +96,7 @@ class OrdersImportCommand extends Command
         $this->finalizeOrders();
 
         $this->info("Import complete. Imported {$importedCount} rows, skipped {$skippedCount}.");
-        $this->info('Queued processing for ' . count($this->ordersToEnqueue) . ' orders.');
+        $this->info('Queued processing for '.count($this->ordersToEnqueue).' orders.');
 
         return self::SUCCESS;
     }
@@ -119,7 +121,8 @@ class OrdersImportCommand extends Command
         $missing = array_values(array_diff($required, $header));
 
         if ($missing) {
-            $this->error('Missing required columns: ' . implode(', ', $missing));
+            $this->error('Missing required columns: '.implode(', ', $missing));
+
             return null;
         }
 
@@ -136,9 +139,10 @@ class OrdersImportCommand extends Command
         $assoc['_line'] = $lineNo;
 
         // Basic presence checks; deeper validation happens later
-        foreach (['external_order_id','customer_id','customer_email','customer_name','product_sku','product_name','unit_price_cents','qty','order_placed_at','currency'] as $k) {
+        foreach (['external_order_id', 'customer_id', 'customer_email', 'customer_name', 'product_sku', 'product_name', 'unit_price_cents', 'qty', 'order_placed_at', 'currency'] as $k) {
             if (! isset($assoc[$k]) || $assoc[$k] === '') {
                 $this->warn("Line {$lineNo}: missing value for '{$k}', skipping.");
+
                 return null;
             }
         }
@@ -161,6 +165,7 @@ class OrdersImportCommand extends Command
 
         if ($unitPriceCents < 0 || $qty < 1) {
             $this->warn("Line {$row['_line']}: invalid money/qty; skipping.");
+
             return;
         }
 
@@ -168,6 +173,7 @@ class OrdersImportCommand extends Command
             $placedAt = CarbonImmutable::parse($row['order_placed_at']);
         } catch (\Throwable $e) {
             $this->warn("Line {$row['_line']}: invalid order_placed_at; skipping.");
+
             return;
         }
 
@@ -189,7 +195,7 @@ class OrdersImportCommand extends Command
                     [
                         'name' => $productName,
                         'price_cents' => $unitPriceCents,
-                        'stock_qty' => 10
+                        'stock_qty' => 10,
                     ]
                 );
 
@@ -200,7 +206,7 @@ class OrdersImportCommand extends Command
                     [
                         'customer_id' => $customer->id,
                         'currency' => $currency,
-                        'placed_at' => $placedAt
+                        'placed_at' => $placedAt,
                     ]
                 );
 
@@ -230,6 +236,7 @@ class OrdersImportCommand extends Command
 
         if (empty($orderIds)) {
             Log::info('No orders to finalize.');
+
             return;
         }
 

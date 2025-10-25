@@ -21,6 +21,7 @@ class Payment extends Model
 
     // Optional: small status constants to avoid string literals everywhere
     public const STATUS_SUCCEEDED = 'SUCCEEDED';
+
     public const STATUS_FAILED = 'FAILED';
 
     public function order()

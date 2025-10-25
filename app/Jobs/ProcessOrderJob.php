@@ -21,6 +21,7 @@ class ProcessOrderJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
+
     public int $backoff = 5;
 
     /**
@@ -50,11 +51,13 @@ class ProcessOrderJob implements ShouldQueue
 
         if ($order->isTerminal()) {
             Log::info("Order {$order->id} is already in terminal state {$order->status}, skipping processing.");
+
             return;
         }
 
         if (! $this->reserveStock($order)) {
             $order->update(['status' => Order::STATUS_FAILED]);
+
             return;
         }
 
@@ -97,7 +100,7 @@ class ProcessOrderJob implements ShouldQueue
                 // Build a map product_id => needed qty
                 $need = $items
                     ->groupBy('product_id')
-                    ->map(fn($group) => (int) $group->sum('qty'));
+                    ->map(fn ($group) => (int) $group->sum('qty'));
 
                 // Check availability
                 $products = Product::query()
@@ -107,8 +110,7 @@ class ProcessOrderJob implements ShouldQueue
                     ->keyBy('id');
 
                 // Validate all first
-                $insufficient = $need->first(fn ($qty, $pid) =>
-                    ! isset($products[$pid]) || $products[$pid]->stock_qty < $qty
+                $insufficient = $need->first(fn ($qty, $pid) => ! isset($products[$pid]) || $products[$pid]->stock_qty < $qty
                 );
 
                 if ($insufficient !== null) {
@@ -127,7 +129,10 @@ class ProcessOrderJob implements ShouldQueue
         } finally {
             // Always release locks
             foreach ($locks as $lock) {
-                try { $lock?->release(); } catch (\Throwable) {}
+                try {
+                    $lock?->release();
+                } catch (\Throwable) {
+                }
             }
         }
     }

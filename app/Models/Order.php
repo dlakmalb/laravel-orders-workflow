@@ -14,7 +14,7 @@ class Order extends Model
         'status',
         'currency',
         'total_cents',
-        'placed_at'
+        'placed_at',
     ];
 
     protected $casts = [
@@ -22,8 +22,11 @@ class Order extends Model
     ];
 
     public const STATUS_PENDING = 'PENDING';
+
     public const STATUS_PAID = 'PAID';
+
     public const STATUS_FAILED = 'FAILED';
+
     public const STATUS_CANCELLED = 'CANCELLED';
 
     public function isTerminal(): bool

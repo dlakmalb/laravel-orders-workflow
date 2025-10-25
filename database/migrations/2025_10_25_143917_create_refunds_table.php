@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('order_id')->constrained()->cascadeOnUpdate()->restrictOnDelete();
             $table->unsignedInteger('amount_cents');
             $table->string('reason', 255)->nullable();
-            $table->enum('status', ['REQUESTED','PROCESSED','FAILED'])->default('REQUESTED');
+            $table->enum('status', ['REQUESTED', 'PROCESSED', 'FAILED'])->default('REQUESTED');
 
             $table->string('idempotency_key', 64)->nullable()->unique();
 
