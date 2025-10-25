@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\NotificationLog;
 use App\Models\Order;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -12,16 +13,21 @@ use Illuminate\Support\Facades\Log;
 
 class OrderProcessedNotification implements ShouldQueue
 {
-    use Queueable, Dispatchable, InteractsWithQueue, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    public int $tries = 3;
+    public int $backoff = 5;
 
     /**
      * Create a new job instance.
      */
     public function __construct(
-        public Order $order,
-        public bool $succeeded
+        public int $orderId,
+        public bool $succeeded,
+        public string $channel = 'log'
     ) {
-        //
+        // Create a separate queue for notifications.
+        $this->onQueue('notifications');
     }
 
     /**
@@ -29,12 +35,40 @@ class OrderProcessedNotification implements ShouldQueue
      */
     public function handle(): void
     {
-        // Log-based for now (could later be mail or database notification)
-        Log::info('Order processed notification', [
-            'order_id' => $this->order->id,
-            'customer_id' => $this->order->customer_id,
+        $order = Order::with('customer')->find($this->orderId);
+
+        if (! $order) {
+            return;
+        }
+
+        $payload = [
+            'order_id' => $order->id,
+            'customer_id' => $order->customer_id,
             'status' => $this->succeeded ? 'PAID' : 'FAILED',
-            'total' => $this->order->total_cents,
+            'total_cents' => $order->total_cents,
+        ];
+
+        $success = true;
+        $error = null;
+
+        try {
+            // For this example, we just log the notification.
+            Log::info('Order processed notification', $payload);
+        } catch (\Throwable $e) {
+            $success = false;
+            $error = $e->getMessage();
+        }
+
+        NotificationLog::create([
+            'order_id' => $order->id,
+            'customer_id' => $order->customer_id,
+            'channel' => $this->channel,
+            'status' => $payload['status'],
+            'total_cents' => $order->total_cents,
+            'payload' => $payload,
+            'success' => $success,
+            'error' => $error,
+            'sent_at' => now(),
         ]);
     }
 }
