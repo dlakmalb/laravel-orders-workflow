@@ -39,4 +39,20 @@ class KpiService
         Redis::decrby($this->kpiKey('revenue_cents'), $amountCents);
         Redis::zincrby($this->leaderboardKey(), -$amountCents, (string) $customerId);
     }
+
+    public function recordRefund(int $customerId, int $amountCents): void
+    {
+        // daily revenue goes down
+        Redis::decrby($this->kpiKey('revenue_cents'), $amountCents);
+
+        $revenue = (int) Redis::get($this->kpiKey('revenue_cents'));
+        $count = (int) Redis::get($this->kpiKey('order_count'));
+
+        if ($count > 0) {
+            Redis::set($this->kpiKey('avg_order_value_cents'), (int) floor($revenue / $count));
+        }
+
+        // leaderboard score goes down
+        Redis::zincrby($this->leaderboardKey(), -$amountCents, (string) $customerId);
+    }
 }
