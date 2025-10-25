@@ -6,6 +6,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\Product;
+use App\Services\KpiService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
@@ -38,7 +39,7 @@ class PaymentCallbackJob implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(): void
+    public function handle(KpiService $kpiService): void
     {
         $order = Order::find($this->orderId);
 
@@ -49,8 +50,16 @@ class PaymentCallbackJob implements ShouldQueue
 
         if ($this->succeeded) {
             $this->finalizePaid($order);
+
+            $kpiService->recordSuccess($order->customer_id, $order->total_cents);
+
+            OrderProcessedNotification::dispatch($order, true);
         } else {
             $this->finalizeFailedWithRollback($order);
+
+            $kpiService->recordFailure($order->customer_id, $order->total_cents);
+
+            OrderProcessedNotification::dispatch($order, false);
         }
     }
 
@@ -61,11 +70,11 @@ class PaymentCallbackJob implements ShouldQueue
             Payment::updateOrCreate(
                 ['order_id' => $order->id],
                 [
-                    'provider'     => 'fake',
+                    'provider' => 'fake',
                     'provider_ref' => $this->providerRef,
                     'amount_cents' => $order->total_cents,
-                    'status'       => 'SUCCEEDED',
-                    'paid_at'      => now(),
+                    'status' => 'SUCCEEDED',
+                    'paid_at' => now(),
                 ]
             );
 
